@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Saga Hero Pro</title>
 
-    <link rel="icon" type="image/webp" href="icon.webp?v=6">
-    <link rel="apple-touch-icon" href="icon.webp?v=6">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-
+    <link rel="icon" type="image/webp" href="icon.webp?v=7">
+    <link rel="apple-touch-icon" href="icon.webp?v=7">
+    
     <style>
         :root { --sw-blue: #2e67f8; --sw-gold: #ffe81f; --bg: #0f0f0f; --card: #1c1c1c; --text: #eee; --red: #cc0000; --green: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 140px; }
@@ -24,7 +22,7 @@
         .val { display: block; font-size: 1.4rem; font-weight: bold; }
         .btn { background: var(--sw-blue); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
         .skill-row { display: grid; grid-template-columns: 1fr 45px 45px 55px; gap: 5px; align-items: center; font-size: 0.85rem; border-bottom: 1px solid #333; padding: 8px 0; }
-        .weapon-card { background: #111; border: 1px solid #444; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .class-row { display: grid; grid-template-columns: 1fr 60px 40px; gap: 8px; margin-bottom: 8px; align-items: center; }
         #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 20px; font-size: 0.95rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 2000; box-sizing: border-box; font-weight: bold; }
     </style>
 </head>
@@ -33,30 +31,23 @@
     <div class="card">
         <div class="flex">
             <div class="col"><label>Name</label><input type="text" id="charName"></div>
-            <div class="col" style="flex:0.3"><label>Lvl</label><input type="number" id="lvl" value="1" oninput="calculate()"></div>
+            <div class="col" style="flex:0.4"><label>Total Level</label><div id="totalLvlDisplay" class="val" style="font-size:1.1rem; padding:8px; background:#222; border-radius:6px; text-align:center;">1</div></div>
         </div>
-        <div class="flex">
-            <div class="col">
-                <label>Species</label>
-                <select id="speciesSelect" onchange="applySpecies()">
-                    <option value="Human">Human</option>
-                    <option value="Zabrak">Zabrak</option>
-                    <option value="Miraluka">Miraluka</option>
-                    <option value="Togruta">Togruta</option>
-                    <option value="Wookiee">Wookiee</option>
-                </select>
-            </div>
-            <div class="col">
-                <label>Class</label>
-                <select id="classSelect" onchange="calculate()">
-                    <option value="Jedi">Jedi</option>
-                    <option value="Noble">Noble</option>
-                    <option value="Scoundrel">Scoundrel</option>
-                    <option value="Scout">Scout</option>
-                    <option value="Soldier">Soldier</option>
-                </select>
-            </div>
+        <div class="col"><label>Species</label>
+            <select id="speciesSelect" onchange="calculate()">
+                <option value="Human">Human</option>
+                <option value="Zabrak">Zabrak</option>
+                <option value="Miraluka">Miraluka</option>
+                <option value="Togruta">Togruta</option>
+                <option value="Wookiee">Wookiee</option>
+            </select>
         </div>
+    </div>
+
+    <div class="card">
+        <h2>Classes (Multiclass)</h2>
+        <div id="classListContainer"></div>
+        <button class="btn" style="background:#444; width:100%; margin-top:8px;" onclick="addClassRow()">+ Add Class</button>
     </div>
 
     <div class="card">
@@ -71,13 +62,7 @@
             <div class="def-box"><label>FORT</label><span class="val" id="fortVal">10</span></div>
             <div class="def-box"><label>WILL</label><span class="val" id="willVal">10</span></div>
         </div>
-        <div class="def-box"><label>Current BAB</label><span class="val" id="babDisplay">0</span></div>
-    </div>
-
-    <div class="card">
-        <h2>Combat</h2>
-        <div id="weaponsContainer"></div>
-        <button class="btn" style="background:#444; width:100%" onclick="addWeapon()">+ Weapon</button>
+        <div class="def-box"><label>Total BAB</label><span class="val" id="babDisplay">0</span></div>
     </div>
 
     <div class="card">
@@ -90,7 +75,7 @@
         <textarea id="feats" rows="6"></textarea>
     </div>
 
-    <div id="log">Ready for Duty.</div>
+    <div id="log">Force Multiclassing Engaged.</div>
 
     <script>
         const stats = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
@@ -101,22 +86,20 @@
         ];
 
         const classData = {
-            "Jedi": { bab: 1, ref: 1, fort: 1, will: 1, feats: "Force Sensitivity, WP (Lightsabers), WP (Simple Weapons)" },
-            "Noble": { bab: 0.75, ref: 1, fort: 0, will: 2, feats: "WP (Pistols), WP (Simple Weapons), Linguist" },
-            "Scoundrel": { bab: 0.75, ref: 2, fort: 0, will: 1, feats: "WP (Pistols), WP (Simple Weapons), Point Blank Shot" },
-            "Scout": { bab: 0.75, ref: 1, fort: 1, will: 1, feats: "WP (Pistols), WP (Rifles), WP (Simple Weapons), Shake it Off" },
-            "Soldier": { bab: 1, ref: 1, fort: 2, will: 0, feats: "AP (Light), AP (Medium), WP (Pistols), WP (Rifles), WP (Simple Weapons)" }
+            "Jedi": { bab: 1, ref: 1, fort: 1, will: 1, feats: "Force Sensitivity, Lightsabers" },
+            "Noble": { bab: 0.75, ref: 1, fort: 0, will: 2, feats: "Pistols, Linguist" },
+            "Scoundrel": { bab: 0.75, ref: 2, fort: 0, will: 1, feats: "Pistols, Point Blank Shot" },
+            "Scout": { bab: 0.75, ref: 1, fort: 1, will: 1, feats: "Rifles, Shake it Off" },
+            "Soldier": { bab: 1, ref: 1, fort: 2, will: 0, feats: "Armor, Rifles, Pistols" }
         };
 
         const speciesData = {
             "Human": {mod:{}, note: "Human: +1 Feat, +1 Skill."},
-            "Zabrak": {mod:{}, note: "Zabrak: +1 All Defenses."},
-            "Miraluka": {mod:{INT:2, CON:-2}},
-            "Togruta": {mod:{DEX:2, CON:-2}},
-            "Wookiee": {mod:{STR:4, CON:2, DEX:-2}}
+            "Zabrak": {mod:{}, note: "Zabrak: +1 Defenses."},
+            "Miraluka": {mod:{INT:2, CON:-2}}, "Togruta": {mod:{DEX:2, CON:-2}}, "Wookiee": {mod:{STR:4, CON:2, DEX:-2}}
         };
 
-        let weaponCount = 0;
+        let charClasses = [{name: 'Jedi', lvl: 1}];
 
         function setup() {
             const abCont = document.getElementById('abilityContainer');
@@ -128,8 +111,37 @@
                 skList.innerHTML += `<div class="skill-row"><span>${s.n}</span><input type="checkbox" id="skT_${i}" onchange="calculate()"><input type="checkbox" id="skF_${i}" onchange="calculate()"><div id="skVal_${i}" style="text-align:right; font-weight:bold; color:var(--sw-gold);">+0</div></div>`;
             });
             load();
-            if(weaponCount === 0) addWeapon();
+            renderClasses();
             calculate();
+        }
+
+        function addClassRow() {
+            charClasses.push({name: 'Soldier', lvl: 1});
+            renderClasses();
+            calculate();
+        }
+
+        function removeClass(i) {
+            if(charClasses.length > 1) {
+                charClasses.splice(i, 1);
+                renderClasses();
+                calculate();
+            }
+        }
+
+        function renderClasses() {
+            const cont = document.getElementById('classListContainer');
+            cont.innerHTML = '';
+            charClasses.forEach((c, i) => {
+                cont.innerHTML += `
+                <div class="class-row">
+                    <select onchange="charClasses[${i}].name=this.value; calculate()">
+                        ${Object.keys(classData).map(cn => `<option value="${cn}" ${cn === c.name ? 'selected' : ''}>${cn}</option>`).join('')}
+                    </select>
+                    <input type="number" value="${c.lvl}" oninput="charClasses[${i}].lvl=parseInt(this.value)||0; calculate()">
+                    <button class="btn" style="background:var(--red); padding:8px;" onclick="removeClass(${i})">X</button>
+                </div>`;
+            });
         }
 
         function getModValue(stat) {
@@ -140,73 +152,49 @@
         }
 
         function calculate() {
-            const lvl = parseInt(document.getElementById('lvl').value) || 1;
-            const className = document.getElementById('classSelect').value;
-            const cData = classData[className];
-            const sp = document.getElementById('speciesSelect').value;
-            
-            // Calculate BAB
-            const bab = Math.floor(lvl * cData.bab);
-            document.getElementById('babDisplay').innerText = bab;
+            let totalLvl = 0; let totalBab = 0;
+            let maxRef = 0; let maxFort = 0; let maxWill = 0;
 
-            // Calculate Defenses
-            const zBonus = (sp === "Zabrak") ? 1 : 0;
-            document.getElementById('refVal').innerText = 10 + lvl + getModValue('DEX') + cData.ref + zBonus;
-            document.getElementById('fortVal').innerText = 10 + lvl + getModValue('CON') + cData.fort + zBonus;
-            document.getElementById('willVal').innerText = 10 + lvl + getModValue('WIS') + cData.will + zBonus;
+            charClasses.forEach(c => {
+                const d = classData[c.name];
+                totalLvl += c.lvl;
+                totalBab += (c.lvl * d.bab);
+                if(d.ref > maxRef) maxRef = d.ref;
+                if(d.fort > maxFort) maxFort = d.fort;
+                if(d.will > maxWill) maxWill = d.will;
+            });
 
-            // Update Stats Display
+            document.getElementById('totalLvlDisplay').innerText = totalLvl;
+            document.getElementById('babDisplay').innerText = Math.floor(totalBab);
+
+            const zBonus = (document.getElementById('speciesSelect').value === "Zabrak") ? 1 : 0;
+            document.getElementById('refVal').innerText = 10 + totalLvl + getModValue('DEX') + maxRef + zBonus;
+            document.getElementById('fortVal').innerText = 10 + totalLvl + getModValue('CON') + maxFort + zBonus;
+            document.getElementById('willVal').innerText = 10 + totalLvl + getModValue('WIS') + maxWill + zBonus;
+
             stats.forEach(s => {
                 const m = getModValue(s);
                 document.getElementById(`mod_${s}`).innerText = (m >= 0 ? '+' : '') + m;
             });
 
-            // Skills
             skills.forEach((s, i) => {
-                const total = Math.floor(lvl/2) + getModValue(s.a) + (document.getElementById(`skT_${i}`).checked ? 5 : 0) + (document.getElementById(`skF_${i}`).checked ? 5 : 0);
+                const total = Math.floor(totalLvl/2) + getModValue(s.a) + (document.getElementById(`skT_${i}`).checked ? 5 : 0) + (document.getElementById(`skF_${i}`).checked ? 5 : 0);
                 document.getElementById(`skVal_${i}`).innerText = (total >= 0 ? '+' : '') + total;
             });
 
-            // Note: We don't overwrite the Feats box so you can add your own, 
-            // but we display the starting ones in the Log.
-            document.getElementById('log').innerHTML = `<b>${className} Feats:</b> ${cData.feats}`;
+            document.getElementById('log').innerHTML = `<b>Starting Feats (${charClasses[0].name}):</b> ${classData[charClasses[0].name].feats}`;
             save();
         }
 
-        function addWeapon() {
-            const id = weaponCount++;
-            const div = document.createElement('div');
-            div.className = 'weapon-card';
-            div.innerHTML = `<input type="text" id="wName_${id}" placeholder="Weapon"><div class="flex"><div class="col"><label>Type</label><select id="wType_${id}"><option value="melee">Melee</option><option value="ranged">Ranged</option></select></div><div class="col"><label>Dmg</label><input type="text" id="wDmg_${id}" placeholder="2d8"></div></div><div class="flex"><button class="btn" style="flex:1" onclick="rollAtk(${id})">Atk</button><button class="btn" style="flex:1; background:var(--red)" onclick="rollDmg(${id})">Dmg</button></div>`;
-            document.getElementById('weaponsContainer').appendChild(div);
-        }
-
-        function rollAtk(id) {
-            const bab = parseInt(document.getElementById('babDisplay').innerText);
-            const mod = getModValue(document.getElementById(`wType_${id}`).value === 'melee' ? 'STR' : 'DEX');
-            const d20 = Math.floor(Math.random() * 20) + 1;
-            document.getElementById('log').innerHTML = `Roll: ${d20} + ${bab} + ${mod} = <b>${d20+bab+mod}</b>`;
-        }
-
-        function rollDmg(id) {
-            const formula = document.getElementById(`wDmg_${id}`).value || "1d8";
-            const bonus = Math.floor(parseInt(document.getElementById('lvl').value)/2);
-            const d = formula.split('d');
-            let sum = 0;
-            for(let i=0; i<d[0]; i++) sum += Math.floor(Math.random() * d[1]) + 1;
-            document.getElementById('log').innerHTML = `Damage: ${sum} + ${bonus} = <b>${sum+bonus}</b>`;
-        }
-
-        function applySpecies() { calculate(); }
         function save() {
-            const data = { weaponCount };
+            const data = { charClasses };
             document.querySelectorAll('input, select, textarea').forEach(el => { if(el.id) data[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
-            localStorage.setItem('saga_hero_v12', JSON.stringify(data));
+            localStorage.setItem('saga_hero_v13', JSON.stringify(data));
         }
         function load() {
-            const data = JSON.parse(localStorage.getItem('saga_hero_v12'));
+            const data = JSON.parse(localStorage.getItem('saga_hero_v13'));
             if(data) {
-                for(let i=1; i<data.weaponCount; i++) addWeapon();
+                if(data.charClasses) charClasses = data.charClasses;
                 Object.keys(data).forEach(id => { const el = document.getElementById(id); if(el) { if(el.type === 'checkbox') el.checked = data[id]; else el.value = data[id]; } });
             }
         }
