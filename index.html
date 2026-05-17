@@ -1,39 +1,197 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saga Hero Pro</title>
+    <title>Saga Hero Master</title>
     <style>
-        :root { --sw-blue: #2e67f8; --sw-gold: #ffe81f; --bg: #0f0f0f; --card: #1c1c1c; --text: #eee; --red: #cc0000; }
-        body { font-family: 'Arial', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 100px; }
-        .card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        h2 { color: var(--sw-gold); margin: 0 0 10px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--sw-blue); }
+        :root { --sw-blue: #2e67f8; --sw-gold: #ffe81f; --bg: #0f0f0f; --card: #1c1c1c; --text: #eee; --red: #cc0000; --green: #28a745; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 120px; }
+        .card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #333; }
+        h2 { color: var(--sw-gold); margin: 0 0 10px 0; font-size: 0.9rem; text-transform: uppercase; border-bottom: 1px solid var(--sw-blue); padding-bottom: 4px; }
         .flex { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
         .col { display: flex; flex-direction: column; flex: 1; }
-        label { font-size: 0.65rem; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
-        input, select, textarea { background: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 1rem; }
+        label { font-size: 0.65rem; color: #888; text-transform: uppercase; }
+        input, select, textarea { background: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .def-box { background: #000; text-align: center; padding: 8px; border-radius: 6px; border: 1px solid var(--sw-blue); }
-        .val { display: block; font-size: 1.5rem; font-weight: bold; color: white; }
-        .weapon-card { background: #111; border: 1px solid #444; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
-        .btn { background: var(--sw-blue); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; text-transform: uppercase; font-size: 0.8rem; }
-        .dmg-btn { background: var(--red); }
+        .val { display: block; font-size: 1.4rem; font-weight: bold; }
+        .btn { background: var(--sw-blue); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
+        .power-item { background: #111; padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--sw-gold); }
+        .spent { opacity: 0.4; text-decoration: line-through; border-left-color: #555; }
         #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 15px; font-size: 1rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 1000; box-sizing: border-box; }
-        .cond-btn { flex: 1; background: #333; border: 1px solid #555; color: white; padding: 5px; font-size: 0.7rem; border-radius: 4px; }
-        .cond-active { background: var(--red); border-color: var(--sw-gold); }
     </style>
 </head>
 <body>
 
     <div class="card">
         <div class="flex">
-            <div class="col"><label>Character Name</label><input type="text" id="charName"></div>
-            <div class="col" style="flex:0.3"><label>Level</label><input type="number" id="lvl" value="1"></div>
+            <div class="col"><label>Name</label><input type="text" id="charName"></div>
+            <div class="col" style="flex:0.3"><label>Level</label><input type="number" id="lvl" value="1" oninput="calculate()"></div>
         </div>
         <div class="flex">
+            <div class="col"><label>BAB</label><input type="number" id="bab" value="0" oninput="calculate()"></div>
             <div class="col"><label>Force Points</label><input type="number" id="fp" value="5"></div>
-            <div class="col"><label>Destiny</label><input type="number" id="dp" value="1"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Abilities & Defenses</h2>
+        <div class="stat-grid" id="abilityContainer"></div>
+        <div class="stat-grid" style="margin-top:15px;">
+            <div class="def-box"><label>REF</label><span class="val" id="refVal">10</span></div>
+            <div class="def-box"><label>FORT</label><span class="val" id="fortVal">10</span></div>
+            <div class="def-box"><label>WILL</label><span class="val" id="willVal">10</span></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Force Powers</h2>
+        <div id="forcePowersList"></div>
+        <div class="flex" style="margin-top:10px;">
+            <input type="text" id="newPowerName" placeholder="Power Name">
+            <button class="btn" style="background:var(--green)" onclick="addPower()">Add</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Feats & Talents</h2>
+        <textarea id="feats" placeholder="List your Feats and Talents here..."></textarea>
+    </div>
+
+    <div class="card">
+        <h2>Weapons</h2>
+        <div id="weaponsContainer"></div>
+        <button class="btn" style="background:#444; width:100%" onclick="addWeapon()">+ Add Weapon</button>
+    </div>
+
+    <div id="log">Ready for combat...</div>
+
+    <script>
+        const stats = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+        let weaponCount = 0;
+        let powers = [];
+
+        function setup() {
+            const abCont = document.getElementById('abilityContainer');
+            stats.forEach(s => {
+                abCont.innerHTML += `<div class="col"><label>${s}</label><input type="number" id="sc_${s}" value="10" oninput="calculate()"><div id="mod_${s}" style="text-align:center; color:var(--sw-gold); font-size:0.8rem; font-weight:bold;">+0</div></div>`;
+            });
+            load();
+            if(weaponCount === 0) addWeapon();
+            renderPowers();
+            calculate();
+        }
+
+        function addPower() {
+            const name = document.getElementById('newPowerName').value;
+            if(!name) return;
+            powers.push({ name: name, spent: false });
+            document.getElementById('newPowerName').value = '';
+            renderPowers();
+            save();
+        }
+
+        function togglePower(index) {
+            powers[index].spent = !powers[index].spent;
+            renderPowers();
+            save();
+        }
+
+        function renderPowers() {
+            const list = document.getElementById('forcePowersList');
+            list.innerHTML = '';
+            powers.forEach((p, i) => {
+                list.innerHTML += `
+                    <div class="power-item ${p.spent ? 'spent' : ''}">
+                        <span>${p.name}</span>
+                        <button class="btn" style="background:${p.spent ? '#555' : 'var(--sw-blue)'}" onclick="togglePower(${i})">
+                            ${p.spent ? 'Recharge' : 'Use'}
+                        </button>
+                    </div>`;
+            });
+        }
+
+        function addWeapon() {
+            const id = weaponCount++;
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.style.background = '#111';
+            div.innerHTML = `
+                <input type="text" id="wName_${id}" placeholder="Weapon Name" style="margin-bottom:8px;">
+                <div class="flex">
+                    <div class="col"><label>Type</label><select id="wType_${id}"><option value="melee">Melee</option><option value="ranged">Ranged</option></select></div>
+                    <div class="col"><label>Dice</label><input type="text" id="wDmg_${id}" placeholder="2d8"></div>
+                </div>
+                <div class="flex" style="margin-top:10px;">
+                    <button class="btn" onclick="rollAtk(${id})">Atk</button>
+                    <button class="btn" style="background:var(--red)" onclick="rollDmg(${id})">Dmg</button>
+                </div>`;
+            document.getElementById('weaponsContainer').appendChild(div);
+        }
+
+        function rollAtk(id) {
+            const bab = parseInt(document.getElementById('bab').value) || 0;
+            const type = document.getElementById(`wType_${id}`).value;
+            const mod = type === 'melee' ? getMod('STR') : getMod('DEX');
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const total = d20 + bab + mod;
+            document.getElementById('log').innerHTML = `Attack: ${d20} + ${bab}(BAB) + ${mod}(Mod) = <strong>${total}</strong>`;
+        }
+
+        function rollDmg(id) {
+            const formula = document.getElementById(`wDmg_${id}`).value || "1d6";
+            const lvl = parseInt(document.getElementById('lvl').value) || 1;
+            const hLvl = Math.floor(lvl / 2);
+            const strMod = getMod('STR');
+            const bonus = document.getElementById(`wType_${id}`).value === 'melee' ? (hLvl + strMod) : hLvl;
+            
+            const parts = formula.toLowerCase().split('d');
+            const n = parseInt(parts[0]) || 1;
+            const s = parseInt(parts[1]) || 6;
+            let sum = 0;
+            for(let i=0; i<n; i++) sum += Math.floor(Math.random() * s) + 1;
+            document.getElementById('log').innerHTML = `Damage: [${sum}] + ${bonus}(Heroic) = <strong>${sum + bonus}</strong>`;
+        }
+
+        function getMod(stat) {
+            return Math.floor((parseInt(document.getElementById(`sc_${stat}`).value) - 10) / 2);
+        }
+
+        function calculate() {
+            stats.forEach(s => {
+                const m = getMod(s);
+                document.getElementById(`mod_${s}`).innerText = (m >= 0 ? '+' : '') + m;
+            });
+            const lvl = parseInt(document.getElementById('lvl').value) || 1;
+            document.getElementById('refVal').innerText = 10 + lvl + getMod('DEX');
+            document.getElementById('fortVal').innerText = 10 + lvl + getMod('CON');
+            document.getElementById('willVal').innerText = 10 + lvl + getMod('WIS');
+            save();
+        }
+
+        function save() {
+            const data = { weaponCount, powers };
+            document.querySelectorAll('input, textarea, select').forEach(el => {
+                if(el.id) data[el.id] = el.value;
+            });
+            localStorage.setItem('saga_hero_v3', JSON.stringify(data));
+        }
+
+        function load() {
+            const data = JSON.parse(localStorage.getItem('saga_hero_v3'));
+            if(data) {
+                powers = data.powers || [];
+                for(let i=1; i<data.weaponCount; i++) addWeapon();
+                Object.keys(data).forEach(id => {
+                    if(document.getElementById(id)) document.getElementById(id).value = data[id];
+                });
+            }
+        }
+        setup();
+    </script>
+</body>
+</html>
         </div>
     </div>
 
