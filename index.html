@@ -11,38 +11,36 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Saga Hero">
 
     <style>
         :root { --sw-blue: #2e67f8; --sw-gold: #ffe81f; --bg: #0f0f0f; --card: #1c1c1c; --text: #eee; --red: #cc0000; --green: #28a745; }
-        body { font-family: 'Segoe UI', Helvetica, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 140px; line-height: 1.4; }
-        .card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        h2 { color: var(--sw-gold); margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--sw-blue); padding-bottom: 4px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 140px; }
+        .card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #333; }
+        h2 { color: var(--sw-gold); margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid var(--sw-blue); padding-bottom: 4px; }
         .flex { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
         .col { display: flex; flex-direction: column; flex: 1; }
-        label { font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 2px; }
-        input, select, textarea { background: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
+        label { font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: bold; }
+        input, select, textarea { background: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 1rem; width: 100%; box-sizing: border-box; }
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .def-box { background: #000; text-align: center; padding: 8px; border-radius: 6px; border: 1px solid var(--sw-blue); }
-        .val { display: block; font-size: 1.4rem; font-weight: bold; color: white; }
-        .btn { background: var(--sw-blue); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); opacity: 0.8; }
-        .skill-row { display: grid; grid-template-columns: 1fr 40px 40px 50px; gap: 5px; align-items: center; font-size: 0.8rem; border-bottom: 1px solid #333; padding: 6px 0; }
+        .val { display: block; font-size: 1.4rem; font-weight: bold; }
+        .btn { background: var(--sw-blue); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
+        .skill-row { display: grid; grid-template-columns: 1fr 45px 45px 55px; gap: 5px; align-items: center; font-size: 0.85rem; border-bottom: 1px solid #333; padding: 8px 0; }
         .power-item { background: #111; padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--sw-gold); }
-        .spent { opacity: 0.3; text-decoration: line-through; filter: grayscale(1); }
+        .spent { opacity: 0.3; text-decoration: line-through; }
         .weapon-card { background: #111; border: 1px solid #444; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
-        #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 15px; font-size: 0.9rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 1000; box-sizing: border-box; font-weight: bold; box-shadow: 0 -5px 15px rgba(0,0,0,0.8); }
+        #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 20px; font-size: 0.95rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 2000; box-sizing: border-box; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <div class="flex">
-            <div class="col"><label>Name</label><input type="text" id="charName"></div>
+            <div class="col"><label>Character Name</label><input type="text" id="charName"></div>
             <div class="col" style="flex:0.3"><label>Lvl</label><input type="number" id="lvl" value="1" oninput="calculate()"></div>
         </div>
         <div class="col">
-            <label>Species Selection</label>
+            <label>Species</label>
             <select id="speciesSelect" onchange="applySpecies()">
                 <option value="Human">Human (+1 Feat/Skill)</option>
                 <option value="Zabrak">Zabrak (+1 Defenses)</option>
@@ -60,7 +58,7 @@
     </div>
 
     <div class="card">
-        <h2>Abilities</h2>
+        <h2>Ability Scores</h2>
         <div class="stat-grid" id="abilityContainer"></div>
     </div>
 
@@ -74,34 +72,37 @@
     </div>
 
     <div class="card">
-        <h2>Combat</h2>
+        <h2>Weapons & Combat</h2>
         <div class="flex">
             <div class="col"><label>BAB</label><input type="number" id="bab" value="0" oninput="calculate()"></div>
         </div>
         <div id="weaponsContainer"></div>
-        <button class="btn" style="background:#444; width:100%" onclick="addWeapon()">+ Weapon</button>
+        <button class="btn" style="background:#444; width:100%" onclick="addWeapon()">+ Add Weapon</button>
     </div>
 
     <div class="card">
-        <h2>Force Powers</h2>
+        <h2>Force Power Suite</h2>
         <div id="forcePowersList"></div>
-        <div class="flex">
+        <div class="flex" style="margin-top:10px;">
             <input type="text" id="newPowerName" placeholder="Power Name">
-            <button class="btn" style="background:var(--green)" onclick="addPower()">Add</button>
+            <button class="btn" style="background:var(--green); min-width:60px;" onclick="addPower()">Add</button>
         </div>
     </div>
 
     <div class="card">
         <h2>Skills</h2>
+        <div class="skill-row" style="color:var(--sw-gold); font-weight:bold; border:none;">
+            <span>Name</span><span>Trn</span><span>Foc</span><span>Total</span>
+        </div>
         <div id="skillList"></div>
     </div>
 
     <div class="card">
         <h2>Feats & Talents</h2>
-        <textarea id="feats" rows="4"></textarea>
+        <textarea id="feats" rows="4" placeholder="List abilities here..."></textarea>
     </div>
 
-    <div id="log">Log Ready...</div>
+    <div id="log">Awaiting Command...</div>
 
     <script>
         const stats = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
@@ -113,10 +114,10 @@
         ];
 
         const speciesData = {
-            "Human": {mod:{}, note: "HUMAN: +1 extra Feat and +1 extra Trained Skill."},
-            "Zabrak": {mod:{}, note: "ZABRAK: +1 Species bonus to all Defenses applied."},
-            "Miraluka": {mod:{INT:2, CON:-2}, note: "FORCE SIGHT: You ignore darkness/cover."},
-            "Togruta": {mod:{DEX:2, CON:-2}, note: "SPATIAL AWARENESS: Use Perception to sense surroundings."},
+            "Human": {mod:{}, note: "HUMAN: Add +1 Feat and +1 Skill choice."},
+            "Zabrak": {mod:{}, note: "ZABRAK: +1 Defense bonus applied."},
+            "Miraluka": {mod:{INT:2, CON:-2}, note: "FORCE SIGHT: You ignore cover/darkness."},
+            "Togruta": {mod:{DEX:2, CON:-2}, note: "SPATIAL AWARENESS: Perception bonus applied."},
             "Bothan": {mod:{DEX:2, CON:-2}}, "Duros": {mod:{DEX:2, INT:2, CON:-2}},
             "Ewok": {mod:{DEX:2, STR:-2}}, "Ithorian": {mod:{WIS:2, CHA:2, DEX:-2}},
             "Mon Calamari": {mod:{INT:2, WIS:2, CON:-2}}, "Trandoshan": {mod:{STR:2, DEX:-2}},
@@ -128,7 +129,7 @@
         function setup() {
             const abCont = document.getElementById('abilityContainer');
             stats.forEach(s => {
-                abCont.innerHTML += `<div class="col"><label>${s}</label><input type="number" id="base_${s}" value="10" oninput="calculate()"><div id="specLabel_${s}" style="font-size:0.6rem; color:var(--sw-gold); text-align:center;">+0 Spec</div><div id="mod_${s}" style="text-align:center; font-weight:bold;">+0</div></div>`;
+                abCont.innerHTML += `<div class="col"><label>${s}</label><input type="number" id="base_${s}" value="10" oninput="calculate()"><div id="specLabel_${s}" style="font-size:0.6rem; color:var(--sw-gold); text-align:center;">+0</div><div id="mod_${s}" style="text-align:center; font-weight:bold;">+0</div></div>`;
             });
             const skList = document.getElementById('skillList');
             skills.forEach((s, i) => {
@@ -198,7 +199,7 @@
             const data = speciesData[sp];
             stats.forEach(s => {
                 const val = data.mod[s] || 0;
-                document.getElementById(`specLabel_${s}`).innerText = (val >= 0 ? '+' : '') + val + ' Spec';
+                document.getElementById(`specLabel_${s}`).innerText = (val >= 0 ? '+' : '') + val;
             });
             document.getElementById('log').innerHTML = data.note || "Species Updated.";
             calculate();
@@ -229,11 +230,11 @@
         function save() {
             const data = { weaponCount, powers };
             document.querySelectorAll('input, select, textarea').forEach(el => { if(el.id) data[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
-            localStorage.setItem('saga_hero_final_v10', JSON.stringify(data));
+            localStorage.setItem('saga_hero_final_v11', JSON.stringify(data));
         }
 
         function load() {
-            const data = JSON.parse(localStorage.getItem('saga_hero_final_v10'));
+            const data = JSON.parse(localStorage.getItem('saga_hero_final_v11'));
             if(data) {
                 powers = data.powers || [];
                 for(let i=1; i<data.weaponCount; i++) addWeapon();
