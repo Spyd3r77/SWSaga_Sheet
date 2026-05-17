@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Saga Hero Pro</title>
 
-    <link rel="icon" type="image/webp" href="icon.webp?v=7">
-    <link rel="apple-touch-icon" href="icon.webp?v=7">
+    <link rel="icon" type="image/webp" href="icon.webp?v=9">
+    <link rel="apple-touch-icon" href="icon.webp?v=9">
     
     <style>
         :root { --sw-blue: #2e67f8; --sw-gold: #ffe81f; --bg: #0f0f0f; --card: #1c1c1c; --text: #eee; --red: #cc0000; --green: #28a745; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 140px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 160px; }
         .card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #333; }
         h2 { color: var(--sw-gold); margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid var(--sw-blue); padding-bottom: 4px; }
         .flex { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
@@ -22,8 +22,10 @@
         .val { display: block; font-size: 1.4rem; font-weight: bold; }
         .btn { background: var(--sw-blue); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
         .skill-row { display: grid; grid-template-columns: 1fr 45px 45px 55px; gap: 5px; align-items: center; font-size: 0.85rem; border-bottom: 1px solid #333; padding: 8px 0; }
-        .class-row { display: grid; grid-template-columns: 1fr 60px 40px; gap: 8px; margin-bottom: 8px; align-items: center; }
-        #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 20px; font-size: 0.95rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 2000; box-sizing: border-box; font-weight: bold; }
+        .xp-bar { height: 6px; background: #333; margin-top: 8px; border-radius: 3px; overflow: hidden; }
+        .xp-progress { height: 100%; background: var(--sw-gold); transition: 0.3s; box-shadow: 0 0 8px var(--sw-gold); }
+        .milestone { color: var(--green); font-size: 0.75rem; font-weight: bold; margin-top: 5px; display: block; }
+        #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 15px; font-size: 0.9rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 2000; box-sizing: border-box; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
     </style>
 </head>
 <body>
@@ -31,38 +33,35 @@
     <div class="card">
         <div class="flex">
             <div class="col"><label>Name</label><input type="text" id="charName"></div>
-            <div class="col" style="flex:0.4"><label>Total Level</label><div id="totalLvlDisplay" class="val" style="font-size:1.1rem; padding:8px; background:#222; border-radius:6px; text-align:center;">1</div></div>
+            <div class="col" style="flex:0.35"><label>Level</label><div id="lvlDisplay" class="val" style="text-align:center; color:var(--sw-gold);">1</div></div>
         </div>
-        <div class="col"><label>Species</label>
-            <select id="speciesSelect" onchange="calculate()">
-                <option value="Human">Human</option>
-                <option value="Zabrak">Zabrak</option>
-                <option value="Miraluka">Miraluka</option>
-                <option value="Togruta">Togruta</option>
-                <option value="Wookiee">Wookiee</option>
-            </select>
+        <div class="col">
+            <label>Experience Points (XP)</label>
+            <input type="number" id="xpInput" value="0" oninput="calculate()">
+            <div class="xp-bar"><div id="xpFill" class="xp-progress" style="width: 0%"></div></div>
+            <span id="nextLevelMsg" class="milestone"></span>
         </div>
     </div>
 
     <div class="card">
-        <h2>Classes (Multiclass)</h2>
-        <div id="classListContainer"></div>
-        <button class="btn" style="background:#444; width:100%; margin-top:8px;" onclick="addClassRow()">+ Add Class</button>
-    </div>
-
-    <div class="card">
-        <h2>Abilities</h2>
+        <h2>Ability Scores</h2>
         <div class="stat-grid" id="abilityContainer"></div>
     </div>
 
     <div class="card">
-        <h2>Defenses & BAB</h2>
-        <div class="stat-grid" style="margin-bottom:10px;">
+        <h2>Defenses & Primary Class</h2>
+        <select id="classSelect" onchange="calculate()" style="margin-bottom:10px;">
+            <option value="Jedi">Jedi</option>
+            <option value="Noble">Noble</option>
+            <option value="Scoundrel">Scoundrel</option>
+            <option value="Scout">Scout</option>
+            <option value="Soldier">Soldier</option>
+        </select>
+        <div class="stat-grid">
             <div class="def-box"><label>REF</label><span class="val" id="refVal">10</span></div>
             <div class="def-box"><label>FORT</label><span class="val" id="fortVal">10</span></div>
             <div class="def-box"><label>WILL</label><span class="val" id="willVal">10</span></div>
         </div>
-        <div class="def-box"><label>Total BAB</label><span class="val" id="babDisplay">0</span></div>
     </div>
 
     <div class="card">
@@ -72,34 +71,29 @@
 
     <div class="card">
         <h2>Feats & Talents</h2>
-        <textarea id="feats" rows="6"></textarea>
+        <textarea id="feats" rows="5" placeholder="Add feats here..."></textarea>
     </div>
 
-    <div id="log">Force Multiclassing Engaged.</div>
+    <div id="log">Awaiting XP Input...</div>
 
     <script>
         const stats = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
         const skills = [
             {n:'Acrobatics', a:'DEX'}, {n:'Climb', a:'STR'}, {n:'Deception', a:'CHA'},
-            {n:'Endurance', a:'CON'}, {n:'Initiative', a:'DEX'}, {n:'Perception', a:'WIS'},
-            {n:'Persuasion', a:'CHA'}, {n:'Stealth', a:'DEX'}, {n:'Use the Force', a:'CHA'}
+            {n:'Endurance', a:'CON'}, {n:'Initiative', a:'DEX'}, {n:'Jump', a:'STR'},
+            {n:'Perception', a:'WIS'}, {n:'Persuasion', a:'CHA'}, {n:'Stealth', a:'DEX'},
+            {n:'Use the Force', a:'CHA'}
         ];
 
+        const xpTable = [0, 1000, 3000, 6000, 10000, 15000, 21000, 28000, 36000, 45000, 55000, 66000, 78000, 91000, 105000, 120000, 136000, 153000, 171000, 190000];
+
         const classData = {
-            "Jedi": { bab: 1, ref: 1, fort: 1, will: 1, feats: "Force Sensitivity, Lightsabers" },
-            "Noble": { bab: 0.75, ref: 1, fort: 0, will: 2, feats: "Pistols, Linguist" },
-            "Scoundrel": { bab: 0.75, ref: 2, fort: 0, will: 1, feats: "Pistols, Point Blank Shot" },
-            "Scout": { bab: 0.75, ref: 1, fort: 1, will: 1, feats: "Rifles, Shake it Off" },
-            "Soldier": { bab: 1, ref: 1, fort: 2, will: 0, feats: "Armor, Rifles, Pistols" }
+            "Jedi": { ref: 1, fort: 1, will: 1 },
+            "Noble": { ref: 1, fort: 0, will: 2 },
+            "Scoundrel": { ref: 2, fort: 0, will: 1 },
+            "Scout": { ref: 1, fort: 1, will: 1 },
+            "Soldier": { ref: 1, fort: 2, will: 0 }
         };
-
-        const speciesData = {
-            "Human": {mod:{}, note: "Human: +1 Feat, +1 Skill."},
-            "Zabrak": {mod:{}, note: "Zabrak: +1 Defenses."},
-            "Miraluka": {mod:{INT:2, CON:-2}}, "Togruta": {mod:{DEX:2, CON:-2}}, "Wookiee": {mod:{STR:4, CON:2, DEX:-2}}
-        };
-
-        let charClasses = [{name: 'Jedi', lvl: 1}];
 
         function setup() {
             const abCont = document.getElementById('abilityContainer');
@@ -111,66 +105,35 @@
                 skList.innerHTML += `<div class="skill-row"><span>${s.n}</span><input type="checkbox" id="skT_${i}" onchange="calculate()"><input type="checkbox" id="skF_${i}" onchange="calculate()"><div id="skVal_${i}" style="text-align:right; font-weight:bold; color:var(--sw-gold);">+0</div></div>`;
             });
             load();
-            renderClasses();
             calculate();
-        }
-
-        function addClassRow() {
-            charClasses.push({name: 'Soldier', lvl: 1});
-            renderClasses();
-            calculate();
-        }
-
-        function removeClass(i) {
-            if(charClasses.length > 1) {
-                charClasses.splice(i, 1);
-                renderClasses();
-                calculate();
-            }
-        }
-
-        function renderClasses() {
-            const cont = document.getElementById('classListContainer');
-            cont.innerHTML = '';
-            charClasses.forEach((c, i) => {
-                cont.innerHTML += `
-                <div class="class-row">
-                    <select onchange="charClasses[${i}].name=this.value; calculate()">
-                        ${Object.keys(classData).map(cn => `<option value="${cn}" ${cn === c.name ? 'selected' : ''}>${cn}</option>`).join('')}
-                    </select>
-                    <input type="number" value="${c.lvl}" oninput="charClasses[${i}].lvl=parseInt(this.value)||0; calculate()">
-                    <button class="btn" style="background:var(--red); padding:8px;" onclick="removeClass(${i})">X</button>
-                </div>`;
-            });
-        }
-
-        function getModValue(stat) {
-            const base = parseInt(document.getElementById(`base_${stat}`).value) || 10;
-            const sp = document.getElementById('speciesSelect').value;
-            const spec = speciesData[sp].mod[stat] || 0;
-            return Math.floor((base + spec - 10) / 2);
         }
 
         function calculate() {
-            let totalLvl = 0; let totalBab = 0;
-            let maxRef = 0; let maxFort = 0; let maxWill = 0;
+            const xp = parseInt(document.getElementById('xpInput').value) || 0;
+            let level = 1;
+            for (let i = 0; i < xpTable.length; i++) { if (xp >= xpTable[i]) level = i + 1; }
 
-            charClasses.forEach(c => {
-                const d = classData[c.name];
-                totalLvl += c.lvl;
-                totalBab += (c.lvl * d.bab);
-                if(d.ref > maxRef) maxRef = d.ref;
-                if(d.fort > maxFort) maxFort = d.fort;
-                if(d.will > maxWill) maxWill = d.will;
-            });
+            // UI Updates
+            document.getElementById('lvlDisplay').innerText = level;
+            const nextXP = xpTable[level] || "MAX";
+            document.getElementById('nextLevelMsg').innerText = level < 20 ? `Next level at ${nextXP} XP` : "Max Level Reached";
+            
+            const currentMilestone = xpTable[level - 1];
+            const nextMilestone = xpTable[level] || xpTable[level - 1];
+            const progress = level === 20 ? 100 : ((xp - currentMilestone) / (nextMilestone - currentMilestone)) * 100;
+            document.getElementById('xpFill').style.width = progress + "%";
 
-            document.getElementById('totalLvlDisplay').innerText = totalLvl;
-            document.getElementById('babDisplay').innerText = Math.floor(totalBab);
+            // Level Benefits (Table 3-1)
+            let benefitText = "";
+            if (level % 3 === 0) benefitText += " ✨ NEW FEAT GAINED!";
+            if (level % 4 === 0) benefitText += " 💪 ABILITY INCREASE (Choose 2)!";
+            
+            const cName = document.getElementById('classSelect').value;
+            const cData = classData[cName];
 
-            const zBonus = (document.getElementById('speciesSelect').value === "Zabrak") ? 1 : 0;
-            document.getElementById('refVal').innerText = 10 + totalLvl + getModValue('DEX') + maxRef + zBonus;
-            document.getElementById('fortVal').innerText = 10 + totalLvl + getModValue('CON') + maxFort + zBonus;
-            document.getElementById('willVal').innerText = 10 + totalLvl + getModValue('WIS') + maxWill + zBonus;
+            document.getElementById('refVal').innerText = 10 + level + getModValue('DEX') + cData.ref;
+            document.getElementById('fortVal').innerText = 10 + level + getModValue('CON') + cData.fort;
+            document.getElementById('willVal').innerText = 10 + level + getModValue('WIS') + cData.will;
 
             stats.forEach(s => {
                 const m = getModValue(s);
@@ -178,23 +141,27 @@
             });
 
             skills.forEach((s, i) => {
-                const total = Math.floor(totalLvl/2) + getModValue(s.a) + (document.getElementById(`skT_${i}`).checked ? 5 : 0) + (document.getElementById(`skF_${i}`).checked ? 5 : 0);
+                const total = Math.floor(level/2) + getModValue(s.a) + (document.getElementById(`skT_${i}`).checked ? 5 : 0) + (document.getElementById(`skF_${i}`).checked ? 5 : 0);
                 document.getElementById(`skVal_${i}`).innerText = (total >= 0 ? '+' : '') + total;
             });
 
-            document.getElementById('log').innerHTML = `<b>Starting Feats (${charClasses[0].name}):</b> ${classData[charClasses[0].name].feats}`;
+            document.getElementById('log').innerHTML = `<div>Status: Level ${level} Hero</div><div style="color:var(--green)">${benefitText}</div>`;
             save();
         }
 
+        function getModValue(stat) {
+            const base = parseInt(document.getElementById(`base_${stat}`).value) || 10;
+            return Math.floor((base - 10) / 2);
+        }
+
         function save() {
-            const data = { charClasses };
+            const data = {};
             document.querySelectorAll('input, select, textarea').forEach(el => { if(el.id) data[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
-            localStorage.setItem('saga_hero_v13', JSON.stringify(data));
+            localStorage.setItem('saga_hero_table31_v1', JSON.stringify(data));
         }
         function load() {
-            const data = JSON.parse(localStorage.getItem('saga_hero_v13'));
+            const data = JSON.parse(localStorage.getItem('saga_hero_table31_v1'));
             if(data) {
-                if(data.charClasses) charClasses = data.charClasses;
                 Object.keys(data).forEach(id => { const el = document.getElementById(id); if(el) { if(el.type === 'checkbox') el.checked = data[id]; else el.value = data[id]; } });
             }
         }
