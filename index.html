@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -18,6 +18,8 @@
         .val { display: block; font-size: 1.4rem; font-weight: bold; }
         .btn { background: var(--sw-blue); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
         .skill-row { display: grid; grid-template-columns: 1fr 40px 40px 50px; gap: 5px; align-items: center; font-size: 0.8rem; border-bottom: 1px solid #333; padding: 4px 0; }
+        .power-item { background: #111; padding: 8px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--sw-gold); }
+        .spent { opacity: 0.4; text-decoration: line-through; border-left-color: #555; }
         #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 15px; font-size: 0.85rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 1000; box-sizing: border-box; }
     </style>
 </head>
@@ -67,8 +69,31 @@
     </div>
 
     <div class="card">
+        <h2>Combat & BAB</h2>
+        <div class="flex">
+            <div class="col"><label>Base Attack Bonus</label><input type="number" id="bab" value="0" oninput="calculate()"></div>
+        </div>
+        <div id="weaponsContainer"></div>
+        <button class="btn" style="background:#444; width:100%" onclick="addWeapon()">+ Add Weapon</button>
+    </div>
+
+    <div class="card">
+        <h2>Force Powers</h2>
+        <div id="forcePowersList"></div>
+        <div class="flex">
+            <input type="text" id="newPowerName" placeholder="Power Name">
+            <button class="btn" style="background:var(--green)" onclick="addPower()">Add</button>
+        </div>
+    </div>
+
+    <div class="card">
         <h2>Skills</h2>
         <div id="skillList"></div>
+    </div>
+
+    <div class="card">
+        <h2>Feats & Talents</h2>
+        <textarea id="feats" placeholder="List your abilities here..."></textarea>
     </div>
 
     <div id="log">Awaiting selection...</div>
@@ -103,6 +128,9 @@
             "Zabrak": {mod:{}}
         };
 
+        let weaponCount = 0;
+        let powers = [];
+
         function setup() {
             const abCont = document.getElementById('abilityContainer');
             stats.forEach(s => {
@@ -126,7 +154,81 @@
                     </div>`;
             });
             load();
+            if(weaponCount === 0) addWeapon();
+            renderPowers();
             calculate();
+        }
+
+        function addPower() {
+            const name = document.getElementById('newPowerName').value;
+            if(!name) return;
+            powers.push({ name: name, spent: false });
+            document.getElementById('newPowerName').value = '';
+            renderPowers();
+            save();
+        }
+
+        function togglePower(index) {
+            powers[index].spent = !powers[index].spent;
+            renderPowers();
+            save();
+        }
+
+        function renderPowers() {
+            const list = document.getElementById('forcePowersList');
+            list.innerHTML = '';
+            powers.forEach((p, i) => {
+                list.innerHTML += `
+                    <div class="power-item ${p.spent ? 'spent' : ''}">
+                        <span>${p.name}</span>
+                        <button class="btn" style="background:${p.spent ? '#555' : 'var(--sw-blue)'}" onclick="togglePower(${i})">
+                            ${p.spent ? 'Recharge' : 'Use'}
+                        </button>
+                    </div>`;
+            });
+        }
+
+        function addWeapon() {
+            const id = weaponCount++;
+            const div = document.createElement('div');
+            div.className = 'weapon-card';
+            div.style.background = '#111'; div.style.padding = '10px'; div.style.borderRadius = '8px'; div.style.marginBottom = '5px';
+            div.innerHTML = `
+                <input type="text" id="wName_${id}" placeholder="Weapon Name" style="margin-bottom:8px;">
+                <div class="flex">
+                    <div class="col"><label>Type</label><select id="wType_${id}"><option value="melee">Melee</option><option value="ranged">Ranged</option></select></div>
+                    <div class="col"><label>Dice</label><input type="text" id="wDmg_${id}" placeholder="2d8"></div>
+                </div>
+                <div class="flex" style="margin-top:10px;">
+                    <button class="btn" onclick="rollAtk(${id})">Atk</button>
+                    <button class="btn" style="background:var(--red)" onclick="rollDmg(${id})">Dmg</button>
+                </div>`;
+            document.getElementById('weaponsContainer').appendChild(div);
+        }
+
+        function rollAtk(id) {
+            const bab = parseInt(document.getElementById('bab').value) || 0;
+            const type = document.getElementById(`wType_${id}`).value;
+            const mod = type === 'melee' ? getModValue('STR') : getModValue('DEX');
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            document.getElementById('log').innerHTML = `Roll: ${d20} + ${bab}(BAB) + ${mod}(Mod) = <strong>${d20+bab+mod}</strong>`;
+        }
+
+        function rollDmg(id) {
+            const formula = document.getElementById(`wDmg_${id}`).value || "1d6";
+            const lvl = parseInt(document.getElementById('lvl').value) || 1;
+            const bonus = Math.floor(lvl / 2) + (document.getElementById(`wType_${id}`).value === 'melee' ? getModValue('STR') : 0);
+            const parts = formula.toLowerCase().split('d');
+            let sum = 0;
+            for(let i=0; i<(parseInt(parts[0])||1); i++) sum += Math.floor(Math.random() * (parseInt(parts[1])||6)) + 1;
+            document.getElementById('log').innerHTML = `Damage: [${sum}] + ${bonus}(Heroic) = <strong>${sum+bonus}</strong>`;
+        }
+
+        function getModValue(stat) {
+            const base = parseInt(document.getElementById(`base_${stat}`).value) || 10;
+            const spName = document.getElementById('speciesSelect').value;
+            const spec = speciesData[spName].mod[stat] || 0;
+            return Math.floor((base + spec - 10) / 2);
         }
 
         function applySpecies() {
@@ -143,7 +245,6 @@
         function calculate() {
             const lvl = parseInt(document.getElementById('lvl').value) || 1;
             const hLvl = Math.floor(lvl / 2);
-            const currentMods = {};
             const spName = document.getElementById('speciesSelect').value;
             const spMods = speciesData[spName].mod;
 
@@ -151,36 +252,35 @@
                 const base = parseInt(document.getElementById(`base_${s}`).value) || 10;
                 const spec = spMods[s] || 0;
                 const m = Math.floor((base + spec - 10) / 2);
-                currentMods[s] = m;
                 document.getElementById(`mod_${s}`).innerText = (m >= 0 ? '+' : '') + m;
             });
 
-            document.getElementById('refVal').innerText = 10 + lvl + currentMods['DEX'];
-            document.getElementById('fortVal').innerText = 10 + lvl + currentMods['CON'];
-            document.getElementById('willVal').innerText = 10 + lvl + currentMods['WIS'];
+            document.getElementById('refVal').innerText = 10 + lvl + getModValue('DEX');
+            document.getElementById('fortVal').innerText = 10 + lvl + getModValue('CON');
+            document.getElementById('willVal').innerText = 10 + lvl + getModValue('WIS');
 
             skills.forEach((s, i) => {
-                const total = hLvl + currentMods[s.a] + (document.getElementById(`skT_${i}`).checked ? 5 : 0) + (document.getElementById(`skF_${i}`).checked ? 5 : 0);
+                const total = hLvl + getModValue(s.a) + (document.getElementById(`skT_${i}`).checked ? 5 : 0) + (document.getElementById(`skF_${i}`).checked ? 5 : 0);
                 document.getElementById(`skVal_${i}`).innerText = (total >= 0 ? '+' : '') + total;
             });
             save();
         }
 
         function save() {
-            const data = {};
-            document.querySelectorAll('input, select').forEach(el => data[el.id] = el.type === 'checkbox' ? el.checked : el.value);
-            localStorage.setItem('saga_hero_v5', JSON.stringify(data));
+            const data = { weaponCount, powers };
+            document.querySelectorAll('input, select, textarea').forEach(el => { if(el.id) data[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
+            localStorage.setItem('saga_final_v1', JSON.stringify(data));
         }
 
         function load() {
-            const data = JSON.parse(localStorage.getItem('saga_hero_v5'));
-            if(data) Object.keys(data).forEach(id => {
-                const el = document.getElementById(id);
-                if(el) { if(el.type === 'checkbox') el.checked = data[id]; else el.value = data[id]; }
-            });
+            const data = JSON.parse(localStorage.getItem('saga_final_v1'));
+            if(data) {
+                powers = data.powers || [];
+                for(let i=1; i<data.weaponCount; i++) addWeapon();
+                Object.keys(data).forEach(id => { const el = document.getElementById(id); if(el) { if(el.type === 'checkbox') el.checked = data[id]; else el.value = data[id]; } });
+            }
         }
         setup();
     </script>
 </body>
 </html>
-
