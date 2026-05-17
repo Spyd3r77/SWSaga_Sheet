@@ -5,26 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Saga Hero Pro</title>
 
-    <link rel="icon" type="image/webp" href="icon.webp?v=9">
-    <link rel="apple-touch-icon" href="icon.webp?v=9">
+    <link rel="icon" type="image/webp" href="icon.webp?v=10">
+    <link rel="apple-touch-icon" href="icon.webp?v=10">
     
     <style>
         :root { --sw-blue: #2e67f8; --sw-gold: #ffe81f; --bg: #0f0f0f; --card: #1c1c1c; --text: #eee; --red: #cc0000; --green: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; padding-bottom: 160px; }
         .card { background: var(--card); padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #333; }
-        h2 { color: var(--sw-gold); margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid var(--sw-blue); padding-bottom: 4px; }
+        h2 { color: var(--sw-gold); margin: 0 0 10px 0; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid var(--sw-blue); padding-bottom: 4px; display: flex; justify-content: space-between; }
         .flex { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
         .col { display: flex; flex-direction: column; flex: 1; }
         label { font-size: 0.6rem; color: #888; text-transform: uppercase; font-weight: bold; }
-        input, select, textarea { background: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 1rem; width: 100%; box-sizing: border-box; }
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        input, select, textarea { background: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
         .def-box { background: #000; text-align: center; padding: 8px; border-radius: 6px; border: 1px solid var(--sw-blue); }
-        .val { display: block; font-size: 1.4rem; font-weight: bold; }
+        .val { display: block; font-size: 1.4rem; font-weight: bold; color:white; }
         .btn { background: var(--sw-blue); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
-        .skill-row { display: grid; grid-template-columns: 1fr 45px 45px 55px; gap: 5px; align-items: center; font-size: 0.85rem; border-bottom: 1px solid #333; padding: 8px 0; }
+        .skill-row { display: grid; grid-template-columns: 1fr 30px 30px 45px 50px; gap: 5px; align-items: center; font-size: 0.75rem; border-bottom: 1px solid #333; padding: 6px 0; }
         .xp-bar { height: 6px; background: #333; margin-top: 8px; border-radius: 3px; overflow: hidden; }
         .xp-progress { height: 100%; background: var(--sw-gold); transition: 0.3s; box-shadow: 0 0 8px var(--sw-gold); }
-        .milestone { color: var(--green); font-size: 0.75rem; font-weight: bold; margin-top: 5px; display: block; }
+        .item-row { display: grid; grid-template-columns: 1fr 60px 40px; gap: 5px; margin-bottom: 5px; }
         #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 15px; font-size: 0.9rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 2000; box-sizing: border-box; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
     </style>
 </head>
@@ -33,14 +33,52 @@
     <div class="card">
         <div class="flex">
             <div class="col"><label>Name</label><input type="text" id="charName"></div>
-            <div class="col" style="flex:0.35"><label>Level</label><div id="lvlDisplay" class="val" style="text-align:center; color:var(--sw-gold);">1</div></div>
+            <div class="col"><label>Species</label>
+                <select id="speciesSelect" onchange="calculate()">
+                    <option value="Human">Human</option>
+                    <option value="Zabrak">Zabrak</option>
+                    <option value="Miraluka">Miraluka</option>
+                    <option value="Togruta">Togruta</option>
+                    <option value="Bothan">Bothan</option>
+                    <option value="Wookiee">Wookiee</option>
+                </select>
+            </div>
+            <div class="col" style="flex:0.35"><label>Lvl</label><div id="lvlDisplay" class="val" style="text-align:center; color:var(--sw-gold);">1</div></div>
         </div>
         <div class="col">
             <label>Experience Points (XP)</label>
             <input type="number" id="xpInput" value="0" oninput="calculate()">
             <div class="xp-bar"><div id="xpFill" class="xp-progress" style="width: 0%"></div></div>
-            <span id="nextLevelMsg" class="milestone"></span>
         </div>
+    </div>
+
+    <div class="card">
+        <h2>Vitals & Condition</h2>
+        <div class="stat-grid">
+            <div class="col"><label>HP (Cur/Max)</label><input type="text" id="hp" placeholder="30/30"></div>
+            <div class="col"><label>Force Pts</label><input type="number" id="forcePts" value="5"></div>
+            <div class="col"><label>Destiny Pts</label><input type="number" id="destinyPts" value="1"></div>
+        </div>
+        <div class="flex">
+            <div class="col">
+                <label>Condition Track Penalty</label>
+                <select id="conditionTrack" onchange="calculate()">
+                    <option value="0">Normal (0)</option>
+                    <option value="-1">-1 Penalty</option>
+                    <option value="-2">-2 Penalty</option>
+                    <option value="-5">-5 Penalty</option>
+                    <option value="-10">-10 Penalty</option>
+                    <option value="-99">Unconscious</option>
+                </select>
+            </div>
+            <div class="def-box" style="flex:0.5"><label>Threshold</label><span class="val" id="dmgThresh">10</span></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Classes (Multiclass)</h2>
+        <div id="classListContainer"></div>
+        <button class="btn" style="background:#444; width:100%; margin-top:8px;" onclick="addClassRow()">+ Add Class Level</button>
     </div>
 
     <div class="card">
@@ -49,14 +87,12 @@
     </div>
 
     <div class="card">
-        <h2>Defenses & Primary Class</h2>
-        <select id="classSelect" onchange="calculate()" style="margin-bottom:10px;">
-            <option value="Jedi">Jedi</option>
-            <option value="Noble">Noble</option>
-            <option value="Scoundrel">Scoundrel</option>
-            <option value="Scout">Scout</option>
-            <option value="Soldier">Soldier</option>
-        </select>
+        <h2>Defenses</h2>
+        <div class="stat-grid">
+            <div class="col"><label>Armor Bonus</label><input type="number" id="armorBonus" value="0" oninput="calculate()"></div>
+            <div class="col"><label>Misc Def</label><input type="number" id="miscDef" value="0" oninput="calculate()"></div>
+            <div class="def-box"><label>Total BAB</label><span class="val" id="babDisplay">0</span></div>
+        </div>
         <div class="stat-grid">
             <div class="def-box"><label>REF</label><span class="val" id="refVal">10</span></div>
             <div class="def-box"><label>FORT</label><span class="val" id="fortVal">10</span></div>
@@ -65,103 +101,256 @@
     </div>
 
     <div class="card">
+        <h2>Weapons</h2>
+        <div id="weaponsContainer"></div>
+        <button class="btn" style="background:#444; width:100%" onclick="addWeapon()">+ Add Weapon</button>
+    </div>
+
+    <div class="card">
+        <h2>Force Powers</h2>
+        <div id="forcePowersList"></div>
+        <div class="flex" style="margin-top:10px;">
+            <input type="text" id="newPowerName" placeholder="Power Name">
+            <button class="btn" style="background:var(--green); min-width:60px;" onclick="addPower()">Add</button>
+        </div>
+    </div>
+
+    <div class="card">
         <h2>Skills</h2>
+        <div class="skill-row" style="color:var(--sw-gold); font-weight:bold; border:none;">
+            <span>Skill</span><span>Trn</span><span>Foc</span><span>Total</span><span>Roll</span>
+        </div>
         <div id="skillList"></div>
     </div>
 
     <div class="card">
-        <h2>Feats & Talents</h2>
-        <textarea id="feats" rows="5" placeholder="Add feats here..."></textarea>
+        <h2>Equipment & Encumbrance</h2>
+        <div id="equipContainer"></div>
+        <div class="flex" style="margin-top:10px;">
+            <input type="text" id="newEqName" placeholder="Item Name">
+            <input type="number" id="newEqWeight" placeholder="Wt (kg)" style="width:80px;">
+            <button class="btn" style="background:var(--sw-blue);" onclick="addEquip()">Add</button>
+        </div>
+        <div style="text-align:right; color:var(--sw-gold); font-weight:bold; margin-top:10px;">
+            Total Weight: <span id="totalWeight">0</span> kg
+        </div>
     </div>
 
-    <div id="log">Awaiting XP Input...</div>
+    <div class="card">
+        <h2>Feats & Talents</h2>
+        <textarea id="feats" rows="5" placeholder="Enter Feats, Talents, and Languages here..."></textarea>
+    </div>
+
+    <div id="log">Systems Online.</div>
 
     <script>
+        // CORE DATA
         const stats = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
         const skills = [
-            {n:'Acrobatics', a:'DEX'}, {n:'Climb', a:'STR'}, {n:'Deception', a:'CHA'},
-            {n:'Endurance', a:'CON'}, {n:'Initiative', a:'DEX'}, {n:'Jump', a:'STR'},
-            {n:'Perception', a:'WIS'}, {n:'Persuasion', a:'CHA'}, {n:'Stealth', a:'DEX'},
-            {n:'Use the Force', a:'CHA'}
+            {n:'Acrobatics', a:'DEX'}, {n:'Climb', a:'STR'}, {n:'Deception', a:'CHA'}, {n:'Endurance', a:'CON'},
+            {n:'Gather Info', a:'CHA'}, {n:'Initiative', a:'DEX'}, {n:'Jump', a:'STR'}, {n:'Know: Bureaucracy', a:'INT'},
+            {n:'Know: Gal. Lore', a:'INT'}, {n:'Know: Life Sci.', a:'INT'}, {n:'Know: Phys. Sci.', a:'INT'},
+            {n:'Know: Social Sci.', a:'INT'}, {n:'Know: Tactics', a:'INT'}, {n:'Know: Tech', a:'INT'},
+            {n:'Mechanics', a:'INT'}, {n:'Perception', a:'WIS'}, {n:'Persuasion', a:'CHA'}, {n:'Pilot', a:'DEX'},
+            {n:'Ride', a:'DEX'}, {n:'Stealth', a:'DEX'}, {n:'Survival', a:'WIS'}, {n:'Swim', a:'STR'},
+            {n:'Treat Injury', a:'WIS'}, {n:'Use Computer', a:'INT'}, {n:'Use the Force', a:'CHA'}
         ];
 
         const xpTable = [0, 1000, 3000, 6000, 10000, 15000, 21000, 28000, 36000, 45000, 55000, 66000, 78000, 91000, 105000, 120000, 136000, 153000, 171000, 190000];
-
+        
         const classData = {
-            "Jedi": { ref: 1, fort: 1, will: 1 },
-            "Noble": { ref: 1, fort: 0, will: 2 },
-            "Scoundrel": { ref: 2, fort: 0, will: 1 },
-            "Scout": { ref: 1, fort: 1, will: 1 },
-            "Soldier": { ref: 1, fort: 2, will: 0 }
+            "Jedi": { bab: 1, ref: 1, fort: 1, will: 1 }, "Noble": { bab: 0.75, ref: 1, fort: 0, will: 2 },
+            "Scoundrel": { bab: 0.75, ref: 2, fort: 0, will: 1 }, "Scout": { bab: 0.75, ref: 1, fort: 1, will: 1 },
+            "Soldier": { bab: 1, ref: 1, fort: 2, will: 0 }
         };
 
+        const speciesData = {
+            "Human": {mod:{}}, "Zabrak": {mod:{}}, "Miraluka": {mod:{INT:2, CON:-2}}, 
+            "Togruta": {mod:{DEX:2, CON:-2}}, "Bothan": {mod:{DEX:2, CON:-2}}, "Wookiee": {mod:{STR:4, CON:2, DEX:-2}}
+        };
+
+        // STATE
+        let charClasses = [{name: 'Jedi', lvl: 1}];
+        let weaponCount = 0;
+        let powers = [];
+        let equipment = [];
+
+        // INITIALIZE
         function setup() {
             const abCont = document.getElementById('abilityContainer');
             stats.forEach(s => {
                 abCont.innerHTML += `<div class="col"><label>${s}</label><input type="number" id="base_${s}" value="10" oninput="calculate()"><div id="mod_${s}" style="text-align:center; font-weight:bold;">+0</div></div>`;
             });
+
             const skList = document.getElementById('skillList');
             skills.forEach((s, i) => {
-                skList.innerHTML += `<div class="skill-row"><span>${s.n}</span><input type="checkbox" id="skT_${i}" onchange="calculate()"><input type="checkbox" id="skF_${i}" onchange="calculate()"><div id="skVal_${i}" style="text-align:right; font-weight:bold; color:var(--sw-gold);">+0</div></div>`;
+                skList.innerHTML += `<div class="skill-row"><span>${s.n}</span><input type="checkbox" id="skT_${i}" onchange="calculate()"><input type="checkbox" id="skF_${i}" onchange="calculate()"><div id="skVal_${i}" style="text-align:center; font-weight:bold; color:var(--sw-gold);">+0</div><button class="btn" style="padding:4px; font-size:0.6rem;" onclick="rollSkill(${i}, '${s.n}')">Roll</button></div>`;
             });
+
             load();
+            if(weaponCount === 0) addWeapon();
+            renderClasses();
+            renderPowers();
+            renderEquip();
             calculate();
         }
 
+        // CALCULATION ENGINE
         function calculate() {
             const xp = parseInt(document.getElementById('xpInput').value) || 0;
             let level = 1;
             for (let i = 0; i < xpTable.length; i++) { if (xp >= xpTable[i]) level = i + 1; }
-
-            // UI Updates
             document.getElementById('lvlDisplay').innerText = level;
-            const nextXP = xpTable[level] || "MAX";
-            document.getElementById('nextLevelMsg').innerText = level < 20 ? `Next level at ${nextXP} XP` : "Max Level Reached";
-            
-            const currentMilestone = xpTable[level - 1];
-            const nextMilestone = xpTable[level] || xpTable[level - 1];
-            const progress = level === 20 ? 100 : ((xp - currentMilestone) / (nextMilestone - currentMilestone)) * 100;
+
+            const progress = level === 20 ? 100 : ((xp - xpTable[level - 1]) / ((xpTable[level]||xp) - xpTable[level - 1])) * 100;
             document.getElementById('xpFill').style.width = progress + "%";
 
-            // Level Benefits (Table 3-1)
-            let benefitText = "";
-            if (level % 3 === 0) benefitText += " ✨ NEW FEAT GAINED!";
-            if (level % 4 === 0) benefitText += " 💪 ABILITY INCREASE (Choose 2)!";
-            
-            const cName = document.getElementById('classSelect').value;
-            const cData = classData[cName];
-
-            document.getElementById('refVal').innerText = 10 + level + getModValue('DEX') + cData.ref;
-            document.getElementById('fortVal').innerText = 10 + level + getModValue('CON') + cData.fort;
-            document.getElementById('willVal').innerText = 10 + level + getModValue('WIS') + cData.will;
+            let totalBab = 0; let maxRef = 0; let maxFort = 0; let maxWill = 0;
+            charClasses.forEach(c => {
+                const d = classData[c.name];
+                totalBab += (c.lvl * d.bab);
+                if(d.ref > maxRef) maxRef = d.ref;
+                if(d.fort > maxFort) maxFort = d.fort;
+                if(d.will > maxWill) maxWill = d.will;
+            });
+            document.getElementById('babDisplay').innerText = Math.floor(totalBab);
 
             stats.forEach(s => {
                 const m = getModValue(s);
                 document.getElementById(`mod_${s}`).innerText = (m >= 0 ? '+' : '') + m;
             });
 
+            const zBonus = (document.getElementById('speciesSelect').value === "Zabrak") ? 1 : 0;
+            const armor = parseInt(document.getElementById('armorBonus').value) || 0;
+            const miscDef = parseInt(document.getElementById('miscDef').value) || 0;
+            
+            // Saga Edition Reflex: 10 + Max(Level, Armor) + Dex + Class + Misc
+            const refBase = Math.max(level, armor);
+            document.getElementById('refVal').innerText = 10 + refBase + getModValue('DEX') + maxRef + zBonus + miscDef;
+            
+            const fortTotal = 10 + level + getModValue('CON') + maxFort + zBonus + miscDef;
+            document.getElementById('fortVal').innerText = fortTotal;
+            document.getElementById('willVal').innerText = 10 + level + getModValue('WIS') + maxWill + zBonus + miscDef;
+            
+            document.getElementById('dmgThresh').innerText = fortTotal + miscDef; // Simplified threshold
+
+            const cond = parseInt(document.getElementById('conditionTrack').value) || 0;
+
             skills.forEach((s, i) => {
-                const total = Math.floor(level/2) + getModValue(s.a) + (document.getElementById(`skT_${i}`).checked ? 5 : 0) + (document.getElementById(`skF_${i}`).checked ? 5 : 0);
+                const total = Math.floor(level/2) + getModValue(s.a) + (document.getElementById(`skT_${i}`).checked ? 5 : 0) + (document.getElementById(`skF_${i}`).checked ? 5 : 0) + cond;
                 document.getElementById(`skVal_${i}`).innerText = (total >= 0 ? '+' : '') + total;
             });
 
-            document.getElementById('log').innerHTML = `<div>Status: Level ${level} Hero</div><div style="color:var(--green)">${benefitText}</div>`;
             save();
         }
 
         function getModValue(stat) {
             const base = parseInt(document.getElementById(`base_${stat}`).value) || 10;
-            return Math.floor((base - 10) / 2);
+            const sp = document.getElementById('speciesSelect').value;
+            const spec = speciesData[sp].mod[stat] || 0;
+            return Math.floor((base + spec - 10) / 2);
         }
 
+        // ROLLERS
+        function rollSkill(index, name) {
+            const val = parseInt(document.getElementById(`skVal_${index}`).innerText);
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const cond = parseInt(document.getElementById('conditionTrack').value) || 0;
+            let msg = `<b>${name} Check:</b> Roll [${d20}] + Mod [${val - cond}]`;
+            if(cond !== 0) msg += ` - Cond [${Math.abs(cond)}]`;
+            document.getElementById('log').innerHTML = `${msg} = <span style="font-size:1.2rem; color:white;">${d20 + val}</span>`;
+        }
+
+        function rollAtk(id) {
+            const bab = parseInt(document.getElementById('babDisplay').innerText);
+            const type = document.getElementById(`wType_${id}`).value;
+            const mod = getModValue(type === 'melee' ? 'STR' : 'DEX');
+            const cond = parseInt(document.getElementById('conditionTrack').value) || 0;
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            document.getElementById('log').innerHTML = `<b>Attack:</b> Roll [${d20}] + BAB [${bab}] + Mod [${mod}] ${cond!==0?`+ Cond [${cond}]`:''} = <span style="font-size:1.2rem; color:white;">${d20+bab+mod+cond}</span>`;
+        }
+
+        function rollDmg(id) {
+            const formula = document.getElementById(`wDmg_${id}`).value || "1d6";
+            const lvl = parseInt(document.getElementById('lvlDisplay').innerText);
+            const bonus = Math.floor(lvl/2) + (document.getElementById(`wType_${id}`).value === 'melee' ? getModValue('STR') : 0);
+            const d = formula.split('d');
+            let sum = 0;
+            for(let i=0; i<(parseInt(d[0])||1); i++) sum += Math.floor(Math.random() * (parseInt(d[1])||6)) + 1;
+            document.getElementById('log').innerHTML = `<b>Damage:</b> Dice [${sum}] + Bonus [${bonus}] = <span style="font-size:1.2rem; color:var(--red);">${sum+bonus}</span>`;
+        }
+
+        function rollForcePower(index) {
+            powers[index].spent = true;
+            renderPowers(); save();
+            const utfIndex = skills.findIndex(s => s.n === 'Use the Force');
+            rollSkill(utfIndex, `Power: ${powers[index].name}`);
+        }
+
+        // UI BUILDERS
+        function addClassRow() { charClasses.push({name: 'Soldier', lvl: 1}); renderClasses(); calculate(); }
+        function removeClass(i) { if(charClasses.length > 1) { charClasses.splice(i, 1); renderClasses(); calculate(); } }
+        function renderClasses() {
+            const cont = document.getElementById('classListContainer'); cont.innerHTML = '';
+            charClasses.forEach((c, i) => {
+                cont.innerHTML += `<div class="flex"><select onchange="charClasses[${i}].name=this.value; calculate()">${Object.keys(classData).map(cn => `<option value="${cn}" ${cn === c.name ? 'selected' : ''}>${cn}</option>`).join('')}</select><input type="number" value="${c.lvl}" oninput="charClasses[${i}].lvl=parseInt(this.value)||0; calculate()"><button class="btn" style="background:var(--red);" onclick="removeClass(${i})">X</button></div>`;
+            });
+        }
+
+        function addWeapon() {
+            const id = weaponCount++;
+            const div = document.createElement('div'); div.className = 'weapon-card card'; div.style.border="1px solid #444";
+            div.innerHTML = `<input type="text" id="wName_${id}" placeholder="Weapon Name" style="margin-bottom:5px;"><div class="flex"><select id="wType_${id}"><option value="melee">Melee</option><option value="ranged">Ranged</option></select><input type="text" id="wDmg_${id}" placeholder="Dmg (e.g. 2d8)"></div><div class="flex" style="margin-top:5px;"><button class="btn" style="flex:1" onclick="rollAtk(${id})">Atk</button><button class="btn" style="flex:1; background:var(--red)" onclick="rollDmg(${id})">Dmg</button></div>`;
+            document.getElementById('weaponsContainer').appendChild(div);
+        }
+
+        function addPower() {
+            const name = document.getElementById('newPowerName').value;
+            if(!name) return;
+            powers.push({ name: name, spent: false });
+            document.getElementById('newPowerName').value = '';
+            renderPowers(); save();
+        }
+        function togglePower(i) { powers[i].spent = !powers[i].spent; renderPowers(); save(); }
+        function renderPowers() {
+            const list = document.getElementById('forcePowersList'); list.innerHTML = '';
+            powers.forEach((p, i) => {
+                list.innerHTML += `<div class="item-row" style="background:#111; padding:8px; border-radius:6px;"><span style="${p.spent?'text-decoration:line-through; color:#555':''}">${p.name}</span><button class="btn" style="background:${p.spent?'#444':'var(--sw-blue)'}; padding:4px;" onclick="togglePower(${i})">${p.spent?'Rest':'Ready'}</button><button class="btn" style="background:var(--green); padding:4px;" onclick="rollForcePower(${i})">Roll</button></div>`;
+            });
+        }
+
+        function addEquip() {
+            const name = document.getElementById('newEqName').value;
+            const wt = parseFloat(document.getElementById('newEqWeight').value) || 0;
+            if(!name) return;
+            equipment.push({ name, wt });
+            document.getElementById('newEqName').value = ''; document.getElementById('newEqWeight').value = '';
+            renderEquip(); save();
+        }
+        function removeEquip(i) { equipment.splice(i, 1); renderEquip(); save(); }
+        function renderEquip() {
+            const list = document.getElementById('equipContainer'); list.innerHTML = '';
+            let sum = 0;
+            equipment.forEach((e, i) => {
+                sum += e.wt;
+                list.innerHTML += `<div class="item-row"><span style="font-size:0.85rem">${e.name}</span><span style="font-size:0.8rem; color:#888;">${e.wt} kg</span><button class="btn" style="background:var(--red); padding:4px;" onclick="removeEquip(${i})">X</button></div>`;
+            });
+            document.getElementById('totalWeight').innerText = sum.toFixed(1);
+        }
+
+        // SAVE & LOAD
         function save() {
-            const data = {};
+            const data = { charClasses, weaponCount, powers, equipment };
             document.querySelectorAll('input, select, textarea').forEach(el => { if(el.id) data[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
-            localStorage.setItem('saga_hero_table31_v1', JSON.stringify(data));
+            localStorage.setItem('saga_hero_ultimate_v1', JSON.stringify(data));
         }
         function load() {
-            const data = JSON.parse(localStorage.getItem('saga_hero_table31_v1'));
+            const data = JSON.parse(localStorage.getItem('saga_hero_ultimate_v1'));
             if(data) {
+                if(data.charClasses) charClasses = data.charClasses;
+                if(data.powers) powers = data.powers;
+                if(data.equipment) equipment = data.equipment;
+                for(let i=1; i<data.weaponCount; i++) addWeapon();
                 Object.keys(data).forEach(id => { const el = document.getElementById(id); if(el) { if(el.type === 'checkbox') el.checked = data[id]; else el.value = data[id]; } });
             }
         }
