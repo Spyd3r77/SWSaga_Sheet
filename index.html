@@ -17,8 +17,7 @@
         .def-box { background: #000; text-align: center; padding: 8px; border-radius: 6px; border: 1px solid var(--sw-blue); }
         .val { display: block; font-size: 1.4rem; font-weight: bold; }
         .btn { background: var(--sw-blue); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
-        .power-item { background: #111; padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--sw-gold); }
-        .spent { opacity: 0.4; text-decoration: line-through; border-left-color: #555; }
+        .skill-row { display: grid; grid-template-columns: 1fr 40px 40px 50px; gap: 5px; align-items: center; font-size: 0.8rem; border-bottom: 1px solid #333; padding: 4px 0; }
         #log { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; color: var(--sw-gold); padding: 15px; font-size: 1rem; border-top: 3px solid var(--sw-gold); text-align: center; z-index: 1000; box-sizing: border-box; }
     </style>
 </head>
@@ -27,13 +26,154 @@
     <div class="card">
         <div class="flex">
             <div class="col"><label>Name</label><input type="text" id="charName"></div>
-            <div class="col" style="flex:0.3"><label>Level</label><input type="number" id="lvl" value="1" oninput="calculate()"></div>
+            <div class="col" style="flex:0.4"><label>Level</label><input type="number" id="lvl" value="1" oninput="calculate()"></div>
         </div>
-        <div class="flex">
-            <div class="col"><label>BAB</label><input type="number" id="bab" value="0" oninput="calculate()"></div>
-            <div class="col"><label>Force Points</label><input type="number" id="fp" value="5"></div>
+        <div class="col">
+            <label>Species</label>
+            <select id="speciesSelect" onchange="applySpecies()">
+                <option value="Human">Human (Selectable Bonus)</option>
+                <option value="Bothan">Bothan (+2 Dex, -2 Con)</option>
+                <option value="Cerean">Cerean (+2 Int, +2 Wis, -2 Dex)</option>
+                <option value="Duros">Duros (+2 Dex, +2 Int, -2 Con)</option>
+                <option value="Ewok">Ewok (+2 Dex, -2 Str)</option>
+                <option value="Gamorrean">Gamorrean (+2 Str, -2 Int, -2 Cha)</option>
+                <option value="Ithorian">Ithorian (+2 Wis, +2 Cha, -2 Dex)</option>
+                <option value="Kel Dor">Kel Dor (+2 Dex, +2 Wis, -2 Con)</option>
+                <option value="Mon Calamari">Mon Calamari (+2 Int, +2 Wis, -2 Con)</option>
+                <option value="Quarren">Quarren (+2 Con, -2 Wis, -2 Cha)</option>
+                <option value="Rodian">Rodian (+2 Dex, -2 Wis, -2 Cha)</option>
+                <option value="Trandoshan">Trandoshan (+2 Str, -2 Dex)</option>
+                <option value="Twi'lek">Twi'lek (+2 Cha, -2 Wis)</option>
+                <option value="Wookiee">Wookiee (+2 Str, +2 Con, -2 Dex)</option>
+                <option value="Zabrak">Zabrak (All-around)</option>
+            </select>
         </div>
     </div>
+
+    <div class="card">
+        <h2>Abilities</h2>
+        <div class="stat-grid" id="abilityContainer"></div>
+    </div>
+
+    <div class="card">
+        <h2>Defenses</h2>
+        <div class="stat-grid">
+            <div class="def-box"><label>REF</label><span class="val" id="refVal">10</span></div>
+            <div class="def-box"><label>FORT</label><span class="val" id="fortVal">10</span></div>
+            <div class="def-box"><label>WILL</label><span class="val" id="willVal">10</span></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Skills</h2>
+        <div class="skill-row" style="color:var(--sw-gold); font-weight:bold;">
+            <span>Skill</span><span>Trn</span><span>Foc</span><span>Total</span>
+        </div>
+        <div id="skillList"></div>
+    </div>
+
+    <div id="log">Welcome, Hero.</div>
+
+    <script>
+        const stats = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+        const skills = [
+            {n:'Acrobatics', a:'DEX'}, {n:'Climb', a:'STR'}, {n:'Deception', a:'CHA'},
+            {n:'Endurance', a:'CON'}, {n:'Gather Info', a:'CHA'}, {n:'Initiative', a:'DEX'},
+            {n:'Jump', a:'STR'}, {n:'Mechanics', a:'INT'}, {n:'Perception', a:'WIS'},
+            {n:'Persuasion', a:'CHA'}, {n:'Pilot', a:'DEX'}, {n:'Stealth', a:'DEX'},
+            {n:'Survival', a:'WIS'}, {n:'Use Computer', a:'INT'}, {n:'Use the Force', a:'CHA'}
+        ];
+
+        const speciesMods = {
+            "Bothan": {DEX:2, CON:-2}, "Cerean": {INT:2, WIS:2, DEX:-2}, "Duros": {DEX:2, INT:2, CON:-2},
+            "Ewok": {DEX:2, STR:-2}, "Gamorrean": {STR:2, INT:-2, CHA:-2}, "Ithorian": {WIS:2, CHA:2, DEX:-2},
+            "Kel Dor": {DEX:2, WIS:2, CON:-2}, "Mon Calamari": {INT:2, WIS:2, CON:-2}, "Quarren": {CON:2, WIS:-2, CHA:-2},
+            "Rodian": {DEX:2, WIS:-2, CHA:-2}, "Trandoshan": {STR:2, DEX:-2}, "Twi'lek": {CHA:2, WIS:-2},
+            "Wookiee": {STR:2, CON:2, DEX:-2}, "Human": {}, "Zabrak": {}
+        };
+
+        function setup() {
+            const abCont = document.getElementById('abilityContainer');
+            stats.forEach(s => {
+                abCont.innerHTML += `
+                    <div class="col">
+                        <label>${s}</label>
+                        <input type="number" id="base_${s}" value="10" oninput="calculate()">
+                        <div id="specLabel_${s}" style="font-size:0.6rem; color:var(--sw-gold); text-align:center;">+0 Spec</div>
+                        <div id="mod_${s}" style="text-align:center; color:white; font-weight:bold;">+0</div>
+                    </div>`;
+            });
+
+            const skList = document.getElementById('skillList');
+            skills.forEach((s, i) => {
+                skList.innerHTML += `
+                    <div class="skill-row">
+                        <span>${s.n}</span>
+                        <input type="checkbox" id="skT_${i}" onchange="calculate()">
+                        <input type="checkbox" id="skF_${i}" onchange="calculate()">
+                        <div id="skVal_${i}" style="text-align:right; font-weight:bold;">+0</div>
+                    </div>`;
+            });
+            load();
+            calculate();
+        }
+
+        function applySpecies() {
+            const sp = document.getElementById('speciesSelect').value;
+            const mods = speciesMods[sp] || {};
+            stats.forEach(s => {
+                const val = mods[s] || 0;
+                document.getElementById(`specLabel_${s}`).innerText = (val >= 0 ? '+' : '') + val + ' Spec';
+            });
+            calculate();
+        }
+
+        function calculate() {
+            const lvl = parseInt(document.getElementById('lvl').value) || 1;
+            const hLvl = Math.floor(lvl / 2);
+            const currentMods = {};
+            const sp = document.getElementById('speciesSelect').value;
+            const spMods = speciesMods[sp] || {};
+
+            stats.forEach(s => {
+                const base = parseInt(document.getElementById(`base_${s}`).value) || 10;
+                const spec = spMods[s] || 0;
+                const total = base + spec;
+                const m = Math.floor((total - 10) / 2);
+                currentMods[s] = m;
+                document.getElementById(`mod_${s}`).innerText = (m >= 0 ? '+' : '') + m;
+            });
+
+            document.getElementById('refVal').innerText = 10 + lvl + currentMods['DEX'];
+            document.getElementById('fortVal').innerText = 10 + lvl + currentMods['CON'];
+            document.getElementById('willVal').innerText = 10 + lvl + currentMods['WIS'];
+
+            skills.forEach((s, i) => {
+                const t = document.getElementById(`skT_${i}`).checked ? 5 : 0;
+                const f = document.getElementById(`skF_${i}`).checked ? 5 : 0;
+                const total = hLvl + currentMods[s.a] + t + f;
+                document.getElementById(`skVal_${i}`).innerText = (total >= 0 ? '+' : '') + total;
+            });
+            save();
+        }
+
+        function save() {
+            const data = {};
+            document.querySelectorAll('input, select').forEach(el => data[el.id] = el.type === 'checkbox' ? el.checked : el.value);
+            localStorage.setItem('saga_hero_v4', JSON.stringify(data));
+        }
+
+        function load() {
+            const data = JSON.parse(localStorage.getItem('saga_hero_v4'));
+            if(data) Object.keys(data).forEach(id => {
+                const el = document.getElementById(id);
+                if(el) { if(el.type === 'checkbox') el.checked = data[id]; else el.value = data[id]; }
+            });
+        }
+        setup();
+    </script>
+</body>
+</html>
 
     <div class="card">
         <h2>Abilities & Defenses</h2>
