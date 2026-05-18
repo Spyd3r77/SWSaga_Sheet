@@ -49,6 +49,25 @@
         </div>
     </div>
 
+    <div class="card" style="border: 1px solid var(--sw-gold);">
+        <h2>Quick Dice Roller</h2>
+        <div class="flex">
+            <div class="col" style="flex:0.5;"><label>Qty</label><input type="number" id="diceQty" value="1" min="1"></div>
+            <div class="col"><label>Die Type</label>
+                <select id="diceType">
+                    <option value="4">d4</option>
+                    <option value="6">d6</option>
+                    <option value="8">d8</option>
+                    <option value="10">d10</option>
+                    <option value="12">d12</option>
+                    <option value="20" selected>d20</option>
+                    <option value="100">% (d100)</option>
+                </select>
+            </div>
+            <button class="btn" style="background:var(--sw-gold); color:#000; height:40px; margin-top:14px;" onclick="universalRoll()">Roll</button>
+        </div>
+    </div>
+
     <div class="card">
         <h2>Vitals & Condition</h2>
         <div class="stat-grid">
@@ -76,7 +95,6 @@
         <h2>Classes & Automation</h2>
         <div id="classListContainer"></div>
         <button class="btn" style="background:#444; width:100%; margin-top:8px;" onclick="addClassRow()">+ Add Level</button>
-        <p style="font-size:0.6rem; color:#888; margin-top:5px;">First class grants all starting feats. Blue highlight = Class Skill.</p>
     </div>
 
     <div class="card">
@@ -115,7 +133,7 @@
             <select id="featDropdown" style="flex:1;"></select>
             <button class="btn" style="background:var(--green);" onclick="addSelectedFeat()">Learn</button>
         </div>
-        <textarea id="feats" rows="4" placeholder="Class feats auto-populate..." style="margin-top:8px;" oninput="calculate()"></textarea>
+        <textarea id="feats" rows="4" placeholder="Class feats..." style="margin-top:8px;" oninput="calculate()"></textarea>
     </div>
 
     <div class="card">
@@ -205,6 +223,20 @@
             calculate();
         }
 
+        // NEW UNIVERSAL ROLLER LOGIC
+        function universalRoll() {
+            const qty = parseInt(document.getElementById('diceQty').value) || 1;
+            const sides = parseInt(document.getElementById('diceType').value);
+            let results = [];
+            let total = 0;
+            for(let i=0; i<qty; i++) {
+                let r = Math.floor(Math.random() * sides) + 1;
+                results.push(r);
+                total += r;
+            }
+            document.getElementById('log').innerHTML = `<b>Rolling ${qty}d${sides}:</b> [${results.join(', ')}] = <span style="font-size:1.3rem; color:white;">${total}</span>`;
+        }
+
         function calculate() {
             const xp = parseInt(document.getElementById('xpInput').value) || 0;
             const xpTable = [0, 1000, 3000, 6000, 10000, 15000, 21000, 28000, 36000, 45000, 55000, 66000, 78000, 91000, 105000, 120000, 136000, 153000, 171000, 190000];
@@ -263,11 +295,9 @@
             const fDrop = document.getElementById('featDropdown');
             fDrop.innerHTML = '<option value="">-- Learn Feat --</option>';
             dbFeats.forEach(f => { if(f.req(state) && !state.allFeats.includes(f.name.toLowerCase())) fDrop.innerHTML += `<option value="${f.name}">${f.name}</option>`; });
-
             const tDrop = document.getElementById('talentDropdown');
             tDrop.innerHTML = '<option value="">-- Choose Talent --</option>';
             charClasses.forEach(c => { (dbTalents[c.name] || []).forEach(t => tDrop.innerHTML += `<option value="${t} (${c.name})">${t} (${c.name})</option>`); });
-
             const pDrop = document.getElementById('powerDropdown');
             pDrop.innerHTML = state.hasForce ? '<option value="">-- Learn Power --</option>' : '<option>(Req. Force Sensitivity)</option>';
             if(state.hasForce) dbPowers.forEach(p => pDrop.innerHTML += `<option value="${p}">${p}</option>`);
@@ -336,10 +366,10 @@
         function save() {
             const data = { charClasses, weaponCount, powers, equipment };
             document.querySelectorAll('input, select, textarea').forEach(el => { if(el.id) data[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
-            localStorage.setItem('saga_hero_pro_v4', JSON.stringify(data));
+            localStorage.setItem('saga_hero_pro_v5', JSON.stringify(data));
         }
         function load() {
-            const data = JSON.parse(localStorage.getItem('saga_hero_pro_v4'));
+            const data = JSON.parse(localStorage.getItem('saga_hero_pro_v5'));
             if(data) {
                 if(data.charClasses) charClasses = data.charClasses; if(data.powers) powers = data.powers; if(data.equipment) equipment = data.equipment;
                 for(let i=1; i<data.weaponCount; i++) addWeapon();
